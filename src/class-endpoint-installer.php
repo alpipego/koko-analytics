@@ -13,9 +13,10 @@ class Endpoint_Installer {
 			return false;
 		}
 
+		$custom_endpoint_path = apply_filters('koko_analytics_custom_endpoint_path', ABSPATH . '/koko-analytics-collect.php');
 		/* Attempt to put the file into place if it does not exist already */
-		if ( ! file_exists( ABSPATH . '/koko-analytics-collect.php' ) ) {
-			$success = file_put_contents( ABSPATH . '/koko-analytics-collect.php', $this->get_file_contents() );
+		if ( ! file_exists( $custom_endpoint_path ) ) {
+			$success = file_put_contents( $custom_endpoint_path, $this->get_file_contents() );
 			if ( ! $success ) {
 				return false;
 			}
@@ -25,7 +26,7 @@ class Endpoint_Installer {
 		$works = $this->test();
 		if ( ! $works ) {
 			/* Remove the file */
-			unlink( ABSPATH . '/koko-analytics-collect.php' );
+			unlink( $custom_endpoint_path );
 			return false;
 		}
 
@@ -64,8 +65,16 @@ EOT;
 	 * @return bool
 	 */
 	private function test() {
-		$tracker_url = site_url( '/koko-analytics-collect.php?nv=1&p=0&up=1&test=1' );
-		$response = wp_remote_get( $tracker_url );
+		/**
+		 * Filter the custom endpoint url
+		 *
+		 * @var string $custom_endpoint_url as expected by plugin
+		 * @var bool $test whether this is testing the endpoint
+		 *
+		 * @return string
+		 */
+		$custom_endpoint_url = apply_filters( 'koko_analytics_custom_endpoint_url', site_url( '/koko-analytics-collect.php?nv=1&p=0&up=1&test=1' ), true );
+		$response = wp_remote_get( $custom_endpoint_url );
 		if ( is_wp_error( $response ) ) {
 			return false;
 		}
